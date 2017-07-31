@@ -1,7 +1,8 @@
 import boto3
 import os
 import sys
-
+import argparse
+import json
 from botocore.exceptions import ClientError
 
 
@@ -28,9 +29,11 @@ class S3ConfigStore(object):
             key = '%s/%s' % (self.prefix, key)
         try:
             obj = self.s3.Object(self.bucket_name, key)
-            return obj.get()['Body'].read().strip()
+            data = obj.get()['Body'].read().strip()
+            return data
         except ClientError as e:
-            sys.stderr.write("Could not read key: ", e.response['Error']['Code'])
+            sys.stderr.write("Could not read key: " + e.response['Error']['Code'] + "\n")
+            sys.exit(1)
 
 
     def write(self, key, data):
@@ -42,11 +45,21 @@ class S3ConfigStore(object):
             obj = self.s3.Bucket(self.bucket_name).put_object(Key=key, Body=data)
             return "Success"
         except ClientError as e:
-            sys.stderr.write("Could not write key: ", e.response['Error']['Code'])
+            sys.stderr.write("Could not write key: " + e.response['Error']['Code'] + "\n")
             sys.exit(1)
 
 
 def run():
+
+
+    # Argument parsing
+    parser = argparse.ArgumentParser()
+    parser.add_argument('action', help='read or write', nargs='?', choices=('read', 'write'))
+    format = parser.add_mutually_exclusive_group()
+    format.add_argument('--key', nargs=1, help="s3 Key Name <something.foo.bar>", required=False)
+    format.add_argument('--json', help="JSON from stdin", action="store_true", required=False)
+    args = parser.parse_args()
+
     # Look for AWS_PROFILE
     if 'AWS_PROFILE' not in os.environ:
         sys.stderr.write("Please set the environment variable AWS_PROFILE.\n")
@@ -60,14 +73,33 @@ def run():
     store = S3ConfigStore(aws_profile, bucket_name)
 
     try:
-        action = sys.argv[1]
-        key = sys.argv[2]
+        action = args.action
     except IndexError:
         sys.stderr.write("Please specify both an action and a key.")
         sys.exit(1)
 
+    if args.json:
+        # Get json from stdin.
+        try:
+            from_stdin_json = json.load(sys.stdin)
+        except:
+            sys.stderr.write("Unable to load JSON from stdin.")
+            sys.exit(1)
+        response_dict = {}
+        for k in from_stdin_json:
+            if action == 'read':
+                response_dict.update({k : store.read(k)})
+        sys.stdout.write(json.dumps(response_dict))
+        sys.exit()
+
+    try:
+        key = args.key[0]
+    except IndexError:
+        sys.stderr.write("Please specify a key.")
+        sys.exit(1)
+
     if action == 'read':
-        sys.stdout.write(store.read(key).decode("utf-8"))
+        sys.stdout.write(store.read(key))
         sys.exit(0)
 
     elif action == 'write':
