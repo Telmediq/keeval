@@ -55,6 +55,7 @@ def run():
     # Argument parsing
     parser = argparse.ArgumentParser()
     parser.add_argument('action', help='read or write', nargs='?', choices=('read', 'write'))
+    parser.add_argument('--bucket', help='s3 Bucket Name', nargs=1, required=False)
     format = parser.add_mutually_exclusive_group()
     format.add_argument('--key', nargs=1, help="s3 Key Name <something.foo.bar>", required=False)
     format.add_argument('--json', help="JSON from stdin", action="store_true", required=False)
@@ -64,12 +65,16 @@ def run():
     if 'AWS_PROFILE' not in os.environ:
         sys.stderr.write("Please set the environment variable AWS_PROFILE.\n")
         sys.exit(1)
-    if 'KEEVAL_BUCKET_NAME' not in os.environ:
+    if args.bucket is not None:
+        bucket_name = args.bucket[0]
+    elif 'KEEVAL_BUCKET_NAME' in os.environ:
+        bucket_name = os.environ['KEEVAL_BUCKET_NAME']
+    else:
         sys.stderr.write("Please set the environment variable KEEVAL_BUCKET_NAME.\n")
         sys.exit(1)
 
     aws_profile = os.environ['AWS_PROFILE']
-    bucket_name = os.environ['KEEVAL_BUCKET_NAME']
+
     store = S3ConfigStore(aws_profile, bucket_name)
 
     try:
@@ -88,7 +93,8 @@ def run():
         response_dict = {}
         for k in from_stdin_json:
             if action == 'read':
-                response_dict.update({k : store.read(k)})
+                key_name = k.split('.')[-1]
+                response_dict.update({key_name: store.read(k)})
         sys.stdout.write(json.dumps(response_dict))
         sys.exit()
 
