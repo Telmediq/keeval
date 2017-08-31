@@ -62,9 +62,11 @@ def run():
     args = parser.parse_args()
 
     # Look for AWS_PROFILE
-    if 'AWS_PROFILE' not in os.environ:
-        sys.stderr.write("Please set the environment variable AWS_PROFILE.\n")
-        sys.exit(1)
+    if 'AWS_PROFILE' in os.environ:
+        aws_profile = os.environ['AWS_PROFILE']
+    else:
+        aws_profile = None
+
     if args.bucket is not None:
         bucket_name = args.bucket[0]
     elif 'KEEVAL_BUCKET_NAME' in os.environ:
@@ -72,8 +74,6 @@ def run():
     else:
         sys.stderr.write("Please set the environment variable KEEVAL_BUCKET_NAME.\n")
         sys.exit(1)
-
-    aws_profile = os.environ['AWS_PROFILE']
 
     store = S3ConfigStore(aws_profile, bucket_name)
 
