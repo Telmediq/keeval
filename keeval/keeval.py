@@ -4,6 +4,7 @@ import sys
 import argparse
 import json
 from botocore.exceptions import ClientError
+from multiprocessing.pool import ThreadPool
 
 
 class S3ConfigStore(object):
@@ -21,15 +22,18 @@ class S3ConfigStore(object):
     def _preprocess_key(self, key):
         return key.replace(self.delimiter, '/')
 
+    def _dotify_key(self,key):
+        return key.replace('/', self.delimiter)
+
     def read(self, key):
 
         key = self._preprocess_key(key)
-
+        data = {}
         if self.prefix:
             key = '%s/%s' % (self.prefix, key)
         try:
             obj = self.s3.Object(self.bucket_name, key)
-            data = obj.get()['Body'].read().strip()
+            data[self._dotify_key(key)] = obj.get()['Body'].read().strip()
             return data
         except ClientError as e:
             sys.stderr.write("Could not read key: " + e.response['Error']['Code'] + "\n")
@@ -48,6 +52,26 @@ class S3ConfigStore(object):
             sys.stderr.write("Could not write key: " + e.response['Error']['Code'] + "\n")
             sys.exit(1)
 
+    def list(self, key):
+        key = self._preprocess_key(key)
+        keys_result = []
+
+        if self.prefix:
+            key = '%s/%s' % (self.prefix, key)
+        try:
+            bucket = self.s3.Bucket(self.bucket_name)
+            for object in bucket.objects.filter(Prefix=key):
+                keys_result.append(object.key)
+            return keys_result
+        except ClientError as e:
+            sys.stdout.write("Could not list key: " + e.response['Error']['Code'] + "\n")
+            sys.exit(1)
+
+    def read_bulk(self, key_list):
+        sys.stderr.write("Reading keys.")
+        pool = ThreadPool(processes=10)
+        data = pool.map(self.read, key_list)
+        return data
 
 def run():
 
@@ -93,8 +117,7 @@ def run():
         response_dict = {}
         for k in from_stdin_json:
             if action == 'read':
-                key_name = k.split('.')[-1]
-                response_dict.update({key_name: store.read(k)})
+                response_dict.update(store.read(k))
         sys.stdout.write(json.dumps(response_dict))
         sys.exit()
 
@@ -105,7 +128,7 @@ def run():
         sys.exit(1)
 
     if action == 'read':
-        sys.stdout.write(store.read(key))
+        sys.stdout.write(store.read(key)[key])
         sys.exit(0)
 
     elif action == 'write':
