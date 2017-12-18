@@ -19,6 +19,8 @@ Returns 0
 echo "blahblah" | keeval write foo.bar.ami_id
 Returns 0
 
+## Read bulk.
+This was developed in order to add functionality to https://github.com/Telmediq/helm-build. It will read a bunch of keys into a dict for use in creating output from jinja templates.
 
 
 
