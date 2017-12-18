@@ -4,6 +4,9 @@ Keeval can read or write values to s3.
 
 The purpose is to allow programatic access to a centrally available key value store we don't have to run: s3.
 
+## Building for distribution.
+python setup.py sdist
+
 ## Installation
 pip install git+https://github.com/telmediq/keeval.git
 
