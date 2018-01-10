@@ -68,10 +68,14 @@ class S3ConfigStore(object):
             sys.exit(1)
 
     def read_bulk(self, key_list):
-        sys.stderr.write("Reading keys.")
+        data_dict = {}
+        sys.stderr.write("Reading keys.\n")
         pool = ThreadPool(processes=10)
         data = pool.map(self.read, key_list)
-        return data
+        for i in data:
+            for key in i.keys():
+               data_dict[key] = i[key]
+        return data_dict
 
 def run():
 
