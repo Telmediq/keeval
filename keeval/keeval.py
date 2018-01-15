@@ -36,7 +36,7 @@ class S3ConfigStore(object):
             data[self._dotify_key(key)] = obj.get()['Body'].read().strip()
             return data
         except ClientError as e:
-            sys.stderr.write("Could not read key: " + e.response['Error']['Code'] + "\n")
+            sys.stderr.write("Could not read key: " + key + " " + e.response['Error']['Code'] + "\n")
             sys.exit(1)
 
 
