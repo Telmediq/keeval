@@ -9,9 +9,12 @@ setup(name='keeval',
       license='MIT',
       packages=['keeval'],
       zip_safe=False,
+      install_requires=[
+        'boto3>=1.7.0',
+      ],
       entry_points={
                   'console_scripts': [
-                      'keeval = keeval:main',
+                      'keeval = keeval:run',
                   ],
               },
 )
