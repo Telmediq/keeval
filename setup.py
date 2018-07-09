@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='keeval',
-      version='0.3',
+      version='0.4',
       description='Read and write values to s3 keys.',
       url='http://github.com/Telmediq/keeval',
       author='Telmediq',
@@ -9,9 +9,12 @@ setup(name='keeval',
       license='MIT',
       packages=['keeval'],
       zip_safe=False,
+      install_requires=[
+        'boto3>=1.7.0',
+      ],
       entry_points={
                   'console_scripts': [
-                      'keeval = keeval:main',
+                      'keeval = keeval:run',
                   ],
               },
 )
