@@ -5,7 +5,7 @@ This module is the entrypoint for keeval. A simple key value read/write tool for
 """
 from .configstore import S3ConfigStore
 import argparse
-import os, sys
+import os, sys, json
 
 def run():
     # Argument parsing
