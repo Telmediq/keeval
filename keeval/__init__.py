@@ -17,11 +17,17 @@ def run():
     format.add_argument('--json', help="JSON from stdin", action="store_true", required=False)
     args = parser.parse_args()
 
-    # Look for AWS_PROFILE
-    if 'AWS_PROFILE' in os.environ:
-        aws_profile = os.environ['AWS_PROFILE']
-    else:
-        aws_profile = None
+    aws_credentials = {
+    "AWS_PROFILE": None,
+    "AWS_ACCESS_KEY_ID": None,
+    "AWS_SECRET_ACCESS_KEY": None,
+    "AWS_SESSION_TOKEN": None
+    }
+
+    # Look for aws credentials
+    for env in aws_credentials.keys():
+      if env in os.environ:
+          aws_credentials[env] = os.environ[env]
 
     if args.bucket is not None:
         bucket_name = args.bucket[0]
@@ -31,7 +37,13 @@ def run():
         sys.stderr.write("Please set the environment variable KEEVAL_BUCKET_NAME.\n")
         sys.exit(1)
 
-    store = S3ConfigStore(aws_profile, bucket_name)
+    store = S3ConfigStore(
+        profile=aws_credentials['AWS_PROFILE'],
+        aws_access_key_id=aws_credentials['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=aws_credentials['AWS_SECRET_ACCESS_KEY'],
+        aws_session_token=aws_credentials['AWS_SESSION_TOKEN'],
+        bucket_name=bucket_name
+        )
 
     try:
         action = args.action
