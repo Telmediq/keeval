@@ -9,16 +9,26 @@ from multiprocessing.pool import ThreadPool
 
 
 class S3ConfigStore(object):
-
-    def __init__(self, bucket_name, prefix=None, delimiter='.', profile=None, aws_access_key_id=None,
-                 aws_secret_access_key=None,):
-        self.aws_session = boto3.session.Session(
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            profile_name=profile)
-        self.bucket_name = bucket_name
-        self.prefix = prefix
-        self.delimiter = delimiter
+        
+    def __init__(
+        self,
+        profile,
+        bucket_name,
+        prefix=None,
+        delimiter='.',
+        aws_access_key_id=None,
+        aws_secret_access_key=None,
+        aws_session_token=None
+        ):
+            self.aws_session = boto3.session.Session(
+                profile_name=profile,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token
+                )
+            self.bucket_name = bucket_name
+            self.prefix = prefix
+            self.delimiter = delimiter
 
     @property
     def s3(self):
@@ -81,3 +91,4 @@ class S3ConfigStore(object):
             for key in i.keys():
                data_dict[key] = i[key]
         return data_dict
+
