@@ -3,31 +3,37 @@ This module is the entrypoint for keeval. A simple key value read/write tool for
 
 
 """
+import json
+import os
+import sys
+
+from argparse import ArgumentParser
+from json import JSONDecodeError
+
 from .configstore import S3ConfigStore
-import argparse
-import os, sys, json
+
 
 def run():
     # Argument parsing
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser()
     parser.add_argument('action', help='read or write', nargs='?', choices=('read', 'write'))
     parser.add_argument('--bucket', help='s3 Bucket Name', nargs=1, required=False)
-    format = parser.add_mutually_exclusive_group()
-    format.add_argument('--key', nargs=1, help="s3 Key Name <something.foo.bar>", required=False)
-    format.add_argument('--json', help="JSON from stdin", action="store_true", required=False)
+    parser_format = parser.add_mutually_exclusive_group()
+    parser_format.add_argument('--key', nargs=1, help="s3 Key Name <something.foo.bar>", required=False)
+    parser_format.add_argument('--json', help="JSON from stdin", action="store_true", required=False)
     args = parser.parse_args()
 
     aws_credentials = {
-    "AWS_PROFILE": None,
-    "AWS_ACCESS_KEY_ID": None,
-    "AWS_SECRET_ACCESS_KEY": None,
-    "AWS_SESSION_TOKEN": None
+        "AWS_PROFILE": None,
+        "AWS_ACCESS_KEY_ID": None,
+        "AWS_SECRET_ACCESS_KEY": None,
+        "AWS_SESSION_TOKEN": None
     }
 
     # Look for aws credentials
     for env in aws_credentials.keys():
-      if env in os.environ:
-          aws_credentials[env] = os.environ[env]
+        if env in os.environ:
+            aws_credentials[env] = os.environ[env]
 
     if args.bucket is not None:
         bucket_name = args.bucket[0]
@@ -43,7 +49,7 @@ def run():
         aws_secret_access_key=aws_credentials['AWS_SECRET_ACCESS_KEY'],
         aws_session_token=aws_credentials['AWS_SESSION_TOKEN'],
         bucket_name=bucket_name
-        )
+    )
 
     try:
         action = args.action
@@ -55,7 +61,7 @@ def run():
         # Get json from stdin.
         try:
             from_stdin_json = json.load(sys.stdin)
-        except:
+        except (JSONDecodeError, TypeError):
             sys.stderr.write("Unable to load JSON from stdin.")
             sys.exit(1)
         response_dict = {}
@@ -83,6 +89,7 @@ def run():
     else:
         sys.stderr.write("Action must be read or write.")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     run()
