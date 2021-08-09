@@ -8,7 +8,14 @@ The purpose is to allow programatic access to a centrally available key value st
 python setup.py sdist
 
 ## Installation
+1. Run the following
+```
 pip install git+https://github.com/telmediq/keeval.git
+```
+2. Put the following in you ~/.bashrc (or convert for your terminal of choice)
+```
+export PATH=~/.local/bin:$PATH
+```
 
 ## Setup
 Set Environment AWS_PROFILE to a vaild profile.
